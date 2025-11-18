@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ospital ng Makati – Antimicrobial Request System (IDS Module)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    :root {
+      --osmak-green: #009a3e;
+      --osmak-green-dark: #007530;
+      --osmak-red: #dc2626;
+      --amber: #f59e0b;
+      --amber-dark: #b45309;
+      --bg-main: #f5f5f5;
+      --bg-card: #ffffff;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --border: #d1d5db;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-main);
+      color: var(--text-main);
+    }
+
+    /* HEADER (sticky) */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--osmak-green);
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+    header img {
+      height: 48px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.05rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    header small {
+      display: block;
+      font-size: 0.8rem;
+      opacity: 0.9;
+    }
+
+    .main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0.5rem 1rem 2rem;
+    }
+
+    /* TABS (sticky below header) */
+    .tabs {
+      position: sticky;
+      top: 72px;
+      z-index: 90;
+      background: var(--bg-main);
+      padding: 0.5rem 0 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .tab-btn {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .tab-btn.active {
+      background: var(--osmak-green);
+      color: #fff;
+      border-color: var(--osmak-green-dark);
+    }
+
+    /* SECTIONS */
+    .section {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .section.active {
+      display: block;
+    }
+
+    /* FILTER ROWS */
+    .filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 0.7rem;
+    }
+    .filter-row input,
+    .filter-row select {
+      padding: 0.45rem;
+      border-radius: 0.4rem;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+      background: #fff;
+    }
+
+    /* PENDING CARDS */
+    .card {
+      background: var(--bg-card);
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      padding: 0.85rem 0.9rem;
+      margin-bottom: 0.8rem;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.04);
+      cursor: pointer;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.4rem;
+    }
+    .card-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .card-body-line {
+      font-size: 0.85rem;
+      margin: 0.12rem 0;
+    }
+
+    /* LIST VIEW (Approved / Rejected tabs) */
+    .list-container {
+      border-radius: 0.6rem;
+      border: 1px solid var(--border);
+      background: #fff;
+      max-height: 520px;
+      overflow-y: auto;
+    }
+    .list-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.7rem 0.9rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .list-item:last-child {
+      border-bottom: none;
+    }
+    .list-left {
+      font-size: 0.85rem;
+    }
+    .list-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      font-size: 0.8rem;
+      gap: 0.3rem;
+    }
+
+    /* TAGS / PILLS */
+    .pill {
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      display: inline-block;
+      white-space: nowrap;
+    }
+    .pill-restricted {
+      background: rgba(220,38,38,0.12);
+      color: var(--osmak-red);
+    }
+    .pill-monitored {
+      background: rgba(16,185,129,0.12);
+      color: #047857;
+    }
+    .pill-ids {
+      background: rgba(245,158,11,0.16);
+      color: var(--amber-dark);
+      border: 1px solid var(--amber);
+    }
+    .pill-status-rej {
+      background: rgba(220,38,38,0.16);
+      color: var(--osmak-red);
+    }
+    .pill-status-app {
+      background: rgba(0,154,62,0.16);
+      color: var(--osmak-green-dark);
+    }
+
+    /* BUTTONS */
+    .actions {
+      margin-top: 0.55rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    .btn {
+      border: none;
+      border-radius: 0.4rem;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .btn-approve {
+      background: var(--osmak-green);
+      color: #fff;
+    }
+    .btn-reject {
+      background: var(--osmak-red);
+      color: #fff;
+    }
+    .btn-delete {
+      background: #6b7280;
+      color: #fff;
+    }
+
+    /* MODALS */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 0.75rem;
+      width: 90%;
+      max-width: 720px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 18px 36px rgba(0,0,0,0.25);
+    }
+    .modal-header {
+      padding: 0.8rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 1rem;
+      font-size: 0.9rem;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+
+    .modal-body input,
+    .modal-body select,
+    .modal-body textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 0.4rem;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+      margin: 0.4rem 0;
+    }
+
+    .modal-actions {
+      margin-top: 0.7rem;
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+
+    /* LOADING OVERLAY */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(255,255,255,0.6);
+      display: none;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 0.75rem;
+      z-index: 150;
+      pointer-events: none;
+    }
+    .loading-pill {
+      background: #111827;
+      color: #f9fafb;
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    }
+
+    /* MOBILE TWEAKS */
+    @media(max-width: 640px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .tabs {
+        gap: 0.35rem;
+      }
+      .tab-btn {
+        flex: 1 1 calc(50% - 0.35rem);
+        text-align: center;
+      }
+      .list-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .list-right {
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <img src="https://maxterrenal-hash.github.io/justculture/osmak-logo.png" alt="OsMak Logo">
+  <div>
+    <h1>OSPITAL NG MAKATI</h1>
+    <small>Antimicrobial Request System – IDS Module</small>
+  </div>
+</header>
+
+<div class="main">
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="pending">Pending Restricted</button>
+    <button class="tab-btn" data-tab="approvedRestricted">Approved Restricted</button>
+    <button class="tab-btn" data-tab="rejectedRestricted">Rejected Restricted</button>
+    <button class="tab-btn" data-tab="approvedMonitored">Approved Monitored</button>
+    <button class="tab-btn" data-tab="rejectedMonitored">Rejected Monitored</button>
+  </div>
+
+  <!-- PENDING RESTRICTED -->
+  <section class="section active" id="pending">
+    <div class="filter-row">
+      <select id="pendingIdsFilter">
+        <option value="">All IDS</option>
+        <option>Dr. Christopher John Tibayan</option>
+        <option>Dr. Paulo Garcia</option>
+        <option>Dr. Jelly Ann Gozun-Recuenco</option>
+        <option>Dr. Michelle Carandang-Cuvin</option>
+      </select>
+    </div>
+
+    <div id="pendingList"></div>
+  </section>
+
+  <!-- APPROVED RESTRICTED -->
+  <section class="section" id="approvedRestricted">
+    <div class="filter-row">
+      <input type="date" id="approvedRestrictedDate">
+      <select id="approvedRestrictedIdsFilter">
+        <option value="">All IDS</option>
+        <option>Dr. Christopher John Tibayan</option>
+        <option>Dr. Paulo Garcia</option>
+        <option>Dr. Jelly Ann Gozun-Recuenco</option>
+        <option>Dr. Michelle Carandang-Cuvin</option>
+      </select>
+    </div>
+    <div class="list-container" id="approvedRestrictedList"></div>
+  </section>
+
+  <!-- REJECTED RESTRICTED -->
+  <section class="section" id="rejectedRestricted">
+    <div class="filter-row">
+      <input type="date" id="rejectedRestrictedDate">
+      <select id="rejectedRestrictedIdsFilter">
+        <option value="">All IDS</option>
+        <option>Dr. Christopher John Tibayan</option>
+        <option>Dr. Paulo Garcia</option>
+        <option>Dr. Jelly Ann Gozun-Recuenco</option>
+        <option>Dr. Michelle Carandang-Cuvin</option>
+      </select>
+    </div>
+    <div class="list-container" id="rejectedRestrictedList"></div>
+  </section>
+
+  <!-- APPROVED MONITORED -->
+  <section class="section" id="approvedMonitored">
+    <div class="filter-row">
+      <input type="date" id="approvedMonitoredDate">
+      <input type="text" id="approvedMonitoredPharm" placeholder="Filter by Pharmacist">
+    </div>
+    <div class="list-container" id="approvedMonitoredList"></div>
+  </section>
+
+  <!-- REJECTED MONITORED -->
+  <section class="section" id="rejectedMonitored">
+    <div class="filter-row">
+      <input type="date" id="rejectedMonitoredDate">
+      <input type="text" id="rejectedMonitoredPharm" placeholder="Filter by Pharmacist">
+    </div>
+    <div class="list-container" id="rejectedMonitoredList"></div>
+  </section>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-pill">Updating…</div>
+</div>
+
+<!-- DETAILS MODAL -->
+<div class="modal-backdrop" id="detailsBackdrop">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3>Request Details</h3>
+      <button class="close-btn" id="detailsClose">✕</button>
+    </div>
+    <div class="modal-body" id="detailsBody"></div>
+  </div>
+</div>
+
+<!-- PIN MODAL -->
+<div class="modal-backdrop" id="pinBackdrop">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <h3>Enter IDS PIN</h3>
+      <button class="close-btn" id="pinClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0;">
+        Please enter your IDS approval PIN to proceed.
+      </p>
+      <input type="password" id="pinInput" placeholder="PIN" maxlength="10">
+      <div class="modal-actions">
+        <button class="btn btn-delete" id="pinCancel">Cancel</button>
+        <button class="btn btn-approve" id="pinSubmit">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REJECT REASON MODAL -->
+<div class="modal-backdrop" id="reasonBackdrop">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="modal-header">
+      <h3>Disapproval Reason</h3>
+      <button class="close-btn" id="reasonClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <label for="rejectReason" style="font-size:0.85rem;">Select reason:</label>
+      <select id="rejectReason">
+        <option>No infection</option>
+        <option>Wrong choice</option>
+        <option>Wrong dose</option>
+        <option>Wrong route</option>
+        <option>Wrong duration</option>
+        <option>Others (specify)</option>
+      </select>
+      <input type="text" id="rejectReasonOther" placeholder="Specify other reason…" style="display:none;">
+      <div class="modal-actions">
+        <button class="btn btn-delete" id="rejectCancel">Cancel</button>
+        <button class="btn btn-reject" id="rejectSubmit">Continue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ==============================
+  // CONFIG
+  // ==============================
+  const API = "https://script.google.com/macros/s/AKfycbz4cK5QenGLM630Awcvv1Ci6vPhFVMXBWzVFpQ82Aj_ZqRH3AX7HbNZukmv0dzlBKxB/exec";
+
+  let ALL_DATA = [];
+  let pinCallback = null;         // function(pin) { ... }
+  let pendingRejectFileId = null;
+  let pendingRejectReason = null;
+
+  // ==============================
+  // LOADING OVERLAY
+  // ==============================
+  function showLoading() {
+    document.getElementById("loadingOverlay").style.display = "flex";
+  }
+  function hideLoading() {
+    document.getElementById("loadingOverlay").style.display = "none";
+  }
+
+  // ==============================
+  // FETCH DATA
+  // ==============================
+  async function loadData() {
+    showLoading();
+    try {
+      const res = await fetch(API);
+      const json = await res.json();
+      ALL_DATA = json.entries || [];
+      setDefaultDates();
+      renderAll();
+    } catch (err) {
+      console.error("IDS fetch error:", err);
+      alert("Unable to load IDS data.");
+    }
+    hideLoading();
+  }
+
+  function setDefaultDates() {
+    const today = new Date().toISOString().split("T")[0];
+    const ids = [
+      "approvedRestrictedDate",
+      "rejectedRestrictedDate",
+      "approvedMonitoredDate",
+      "rejectedMonitoredDate"
+    ];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.value) el.value = today;
+    });
+  }
+
+  // ==============================
+  // MODALS – HELPERS
+  // ==============================
+  function openDetails(entry) {
+    const d = entry.data;
+    const body = document.getElementById("detailsBody");
+
+    const serviceResidentLabel =
+      d.mode === "adult" ? "Internal Medicine Resident" : "Pediatrics Resident";
+
+    body.innerHTML = `
+      <p><strong>Patient:</strong> ${d.patientName || ""} (${d.age || ""} y, ${d.sex || ""})</p>
+      <p><strong>Hospital #:</strong> ${d.hospitalNumber || ""}</p>
+      <p><strong>Ward:</strong> ${d.ward || ""}</p>
+      <p><strong>Diagnosis:</strong> ${d.diagnosis || ""}</p>
+      <hr>
+      <p><strong>Indication:</strong> ${d.indication || ""}</p>
+      <p><strong>Drug:</strong> ${d.antimicrobial || ""}</p>
+      <p><strong>Dose:</strong> ${d.dose || ""}</p>
+      <p><strong>Frequency:</strong> ${d.frequency || ""}</p>
+      <p><strong>Duration:</strong> ${d.duration || ""} days</p>
+      <p><strong>Drug Type:</strong> ${d.drugType || ""}</p>
+      <hr>
+      <p><strong>Scr:</strong> ${d.scrMgDl || ""}</p>
+      <p><strong>SGPT:</strong> ${d.sgpt || ""}</p>
+      <p><strong>eGFR:</strong> ${d.egfrText || ""}</p>
+      <hr>
+      <p><strong>Requesting Resident:</strong> ${d.residentName || ""} (${d.clinicalDept || ""})</p>
+      ${
+        d.drugType === "Restricted"
+          ? `<p><strong>${serviceResidentLabel}:</strong> ${d.serviceResidentName || ""}</p>
+             <p><strong>IDS Specialist:</strong> ${d.idSpecialist || ""}</p>`
+          : ""
+      }
+      ${
+        d.dispensed && d.dispensedBy
+          ? `<p><strong>Dispensed by:</strong> ${d.dispensedBy}</p>`
+          : ""
+      }
+      ${
+        d.disapprovedReason
+          ? `<p><strong>Disapproved reason:</strong> ${d.disapprovedReason}</p>`
+          : ""
+      }
+      <p><strong>Status:</strong> ${d.status || ""}</p>
+    `;
+
+    document.getElementById("detailsBackdrop").style.display = "flex";
+  }
+
+  document.getElementById("detailsClose").onclick = () => {
+    document.getElementById("detailsBackdrop").style.display = "none";
+  };
+  document.getElementById("detailsBackdrop").onclick = (e) => {
+    if (e.target.id === "detailsBackdrop") {
+      document.getElementById("detailsBackdrop").style.display = "none";
+    }
+  };
+
+  function openPinModal(callback) {
+    pinCallback = callback;
+    document.getElementById("pinInput").value = "";
+    document.getElementById("pinBackdrop").style.display = "flex";
+    setTimeout(() => document.getElementById("pinInput").focus(), 50);
+  }
+  function closePinModal() {
+    pinCallback = null;
+    document.getElementById("pinBackdrop").style.display = "none";
+  }
+
+  document.getElementById("pinCancel").onclick =
+  document.getElementById("pinClose").onclick = () => {
+    closePinModal();
+  };
+
+  document.getElementById("pinSubmit").onclick = () => {
+    const pin = document.getElementById("pinInput").value.trim();
+    if (!pin) {
+      alert("PIN is required.");
+      return;
+    }
+    if (pinCallback) pinCallback(pin);
+    closePinModal();
+  };
+
+  // Reject Reason Modal
+  const rejectReasonEl = document.getElementById("rejectReason");
+  const rejectOtherEl = document.getElementById("rejectReasonOther");
+
+  rejectReasonEl.onchange = () => {
+    if (rejectReasonEl.value === "Others (specify)") {
+      rejectOtherEl.style.display = "block";
+    } else {
+      rejectOtherEl.style.display = "none";
+      rejectOtherEl.value = "";
+    }
+  };
+
+  function openReasonModal(fileId) {
+    pendingRejectFileId = fileId;
+    pendingRejectReason = null;
+    rejectReasonEl.value = "No infection";
+    rejectOtherEl.style.display = "none";
+    rejectOtherEl.value = "";
+    document.getElementById("reasonBackdrop").style.display = "flex";
+  }
+
+  function closeReasonModal() {
+    pendingRejectFileId = null;
+    pendingRejectReason = null;
+    document.getElementById("reasonBackdrop").style.display = "none";
+  }
+
+  document.getElementById("rejectCancel").onclick =
+  document.getElementById("reasonClose").onclick = () => {
+    closeReasonModal();
+  };
+
+  document.getElementById("rejectSubmit").onclick = () => {
+    if (!pendingRejectFileId) {
+      closeReasonModal();
+      return;
+    }
+    let reason = rejectReasonEl.value;
+    if (reason === "Others (specify)") {
+      const other = rejectOtherEl.value.trim();
+      if (!other) {
+        alert("Please specify a reason.");
+        return;
+      }
+      reason = other;
+    }
+    pendingRejectReason = reason;
+    document.getElementById("reasonBackdrop").style.display = "none";
+
+    openPinModal(async (pin) => {
+      await updateStatus(pendingRejectFileId, "disapproved", pendingRejectReason, pin);
+      pendingRejectFileId = null;
+      pendingRejectReason = null;
+    });
+  };
+
+    // ==============================
+  // IDS ACTION HELPERS (API CALLS)
+  // ==============================
+  async function updateStatus(fileId, status, reason, pin) {
+    try {
+      showLoading();
+      const body = {
+        action: "idsUpdateStatus",
+        fileId,
+        status,
+        pin
+      };
+      if (status === "disapproved" && reason) {
+        body.reason = reason;
+      }
+
+      const res = await fetch(API, {
+        method: "POST",
+        body: JSON.stringify(body)
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!json.ok) {
+        alert(json.error || "Update failed.");
+      }
+      await loadData();
+    } catch (err) {
+      console.error("updateStatus error:", err);
+      alert("Error updating request.");
+    } finally {
+      hideLoading();
+    }
+  }
+
+  async function deleteEntry(fileId, pin) {
+    try {
+      showLoading();
+      const res = await fetch(API, {
+        method: "POST",
+        body: JSON.stringify({
+          action: "idsDeleteEntry",
+          fileId,
+          pin
+        })
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!json.ok) {
+        alert(json.error || "Delete failed.");
+      }
+      await loadData();
+    } catch (err) {
+      console.error("idsDeleteEntry error:", err);
+      alert("Error deleting entry.");
+    } finally {
+      hideLoading();
+    }
+  }
+
+  // ==============================
+  // RENDER HELPERS
+  // ==============================
+  function renderPending() {
+    const idsFilter = document.getElementById("pendingIdsFilter").value.trim();
+    const container = document.getElementById("pendingList");
+    container.innerHTML = "";
+
+    const filtered = ALL_DATA.filter((e) => {
+      const d = e.data;
+      if (!d) return false;
+
+      // Only restricted entries
+      if (d.drugType !== "Restricted") return false;
+
+      // Only entries waiting for IDS
+      if (d.status !== "for_ids_approval") return false;
+
+      // Filter by IDS name (if selected)
+      if (idsFilter && d.idSpecialist !== idsFilter) return false;
+
+      return true;
+    });
+
+    if (!filtered.length) {
+      container.innerHTML = `
+        <div class="card" style="cursor:default;">
+          <div class="card-body-line" style="color:var(--text-muted);">No pending restricted entries.</div>
+        </div>`;
+      return;
+    }
+
+    filtered.forEach((entry) => {
+      const d = entry.data;
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card-header">
+          <div class="card-title">${d.patientName || "Unnamed Patient"}</div>
+          <span class="pill pill-restricted">Restricted</span>
+        </div>
+
+        <div class="card-body-line"><strong>Drug:</strong> ${d.antimicrobial || ""}</div>
+        <div class="card-body-line"><strong>Ward:</strong> ${d.ward || ""}</div>
+
+        <div class="card-body-line">
+          <span class="pill pill-ids">${d.idSpecialist || "No IDS Assigned"}</span>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-approve btn-approve-ids">Approve</button>
+          <button class="btn btn-reject btn-reject-ids">Disapprove</button>
+        </div>
+      `;
+
+      // Clicking the card opens full details
+      card.onclick = (ev) => {
+        if (ev.target.closest("button")) return;
+        openDetails(entry);
+      };
+
+      // Approve -> PIN → idsUpdateStatus(..., "approved")
+      card.querySelector(".btn-approve-ids").onclick = (ev) => {
+        ev.stopPropagation();
+        openPinModal(async (pin) => {
+          await updateStatus(entry.fileId, "approved", null, pin);
+        });
+      };
+
+      // Disapprove -> Reason → PIN → idsUpdateStatus(..., "disapproved")
+      card.querySelector(".btn-reject-ids").onclick = (ev) => {
+        ev.stopPropagation();
+        openReasonModal(entry.fileId);
+      };
+
+      container.appendChild(card);
+    });
+  }
+
+  function renderRestrictedList({ listId, dateId, idsFilterId, status, allowApprove, allowDelete }) {
+    const container = document.getElementById(listId);
+    container.innerHTML = "";
+
+    const date = document.getElementById(dateId).value;
+    const idsFilter = document.getElementById(idsFilterId).value;
+
+    const filtered = ALL_DATA.filter(e => {
+      const d = e.data;
+      if (!d) return false;
+      if (d.drugType !== "Restricted") return false;
+      if (d.status !== status) return false;
+      if (date && d.reqDate !== date) return false;
+      if (idsFilter && d.idSpecialist !== idsFilter) return false;
+      return true;
+    });
+
+    if (!filtered.length) {
+      container.innerHTML = `<div class="list-item" style="cursor:default;"><div style="font-size:0.85rem; color:var(--text-muted);">No entries for this filter.</div></div>`;
+      return;
+    }
+
+    filtered.forEach(entry => {
+      const d = entry.data;
+      const row = document.createElement("div");
+      row.className = "list-item";
+
+      const left = document.createElement("div");
+      left.className = "list-left";
+      left.innerHTML = `
+        <strong>${d.patientName || "Unnamed Patient"}</strong><br>
+        ${d.ward || ""} – ${d.antimicrobial || ""}<br>
+        <span style="color:var(--text-muted); font-size:0.8rem;">${d.indication || ""}</span><br>
+        <span class="pill pill-restricted">Restricted</span>
+        <span class="pill pill-ids">${d.idSpecialist || ""}</span>
+      `;
+
+      const right = document.createElement("div");
+      right.className = "list-right";
+      right.innerHTML = `
+        <span style="color:var(--text-muted);">${d.reqDate || ""}</span>
+        <div>
+          ${
+            status === "approved"
+              ? `<span class="pill pill-status-app">Approved</span>`
+              : `<span class="pill pill-status-rej">Rejected</span>`
+          }
+        </div>
+      `;
+
+      const btnBar = document.createElement("div");
+      btnBar.style.display = "flex";
+      btnBar.style.gap = "0.35rem";
+      btnBar.style.marginTop = "0.45rem";
+
+      // From Rejected → Approve (back to approved)
+      if (allowApprove) {
+        const approveBtn = document.createElement("button");
+        approveBtn.className = "btn btn-approve";
+        approveBtn.textContent = "Approve";
+        approveBtn.onclick = (ev) => {
+          ev.stopPropagation();
+          openDetails(entry);
+          openPinModal(async (pin) => {
+            await updateStatus(entry.fileId, "approved", null, pin);
+          });
+        };
+        btnBar.appendChild(approveBtn);
+      }
+
+      // From Approved → Disapprove
+      if (status === "approved") {
+        const disBtn = document.createElement("button");
+        disBtn.className = "btn btn-reject";
+        disBtn.textContent = "Disapprove";
+        disBtn.onclick = (ev) => {
+          ev.stopPropagation();
+          openDetails(entry);
+          openReasonModal(entry.fileId);
+        };
+        btnBar.appendChild(disBtn);
+      }
+
+      if (allowDelete) {
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn btn-delete";
+        delBtn.textContent = "Delete";
+        delBtn.onclick = (ev) => {
+          ev.stopPropagation();
+          if (!confirm("Delete this IDS record?")) return;
+          openPinModal(async (pin) => {
+            await deleteEntry(entry.fileId, pin);
+          });
+        };
+        btnBar.appendChild(delBtn);
+      }
+
+      right.appendChild(btnBar);
+
+      row.appendChild(left);
+      row.appendChild(right);
+
+      row.onclick = () => openDetails(entry);
+
+      container.appendChild(row);
+    });
+  }
+
+  function renderMonitoredList({ listId, dateId, pharmId, status }) {
+    const container = document.getElementById(listId);
+    container.innerHTML = "";
+
+    const date = document.getElementById(dateId).value;
+    const pharmFilter = document.getElementById(pharmId).value.trim().toLowerCase();
+
+    const filtered = ALL_DATA.filter(e => {
+      const d = e.data;
+      if (!d) return false;
+      if (d.drugType !== "Monitored") return false;
+      if (d.status !== status) return false;
+      if (date && d.reqDate !== date) return false;
+
+      const pharmName = (d.dispensedBy || "").toLowerCase();
+      if (pharmFilter && !pharmName.includes(pharmFilter)) return false;
+
+      return true;
+    });
+
+    if (!filtered.length) {
+      container.innerHTML = `<div class="list-item" style="cursor:default;"><div style="font-size:0.85rem; color:var(--text-muted);">No monitored entries for this filter.</div></div>`;
+      return;
+    }
+
+    filtered.forEach(entry => {
+      const d = entry.data;
+      const row = document.createElement("div");
+      row.className = "list-item";
+
+      const left = document.createElement("div");
+      left.className = "list-left";
+      left.innerHTML = `
+        <strong>${d.patientName || "Unnamed Patient"}</strong><br>
+        ${d.ward || ""} – ${d.antimicrobial || ""}<br>
+        <span style="color:var(--text-muted); font-size:0.8rem;">${d.indication || ""}</span><br>
+        <span class="pill pill-monitored">Monitored</span>
+      `;
+
+      const right = document.createElement("div");
+      right.className = "list-right";
+      right.innerHTML = `
+        <span style="color:var(--text-muted);">${d.reqDate || ""}</span>
+        ${
+          d.dispensedBy
+            ? `<span style="font-size:0.78rem; color:var(--text-muted);">Pharmacist: ${d.dispensedBy}</span>`
+            : ""
+        }
+        <span class="pill ${
+          status === "approved" ? "pill-status-app" : "pill-status-rej"
+        }">${status === "approved" ? "Approved" : "Rejected"}</span>
+      `;
+
+      row.appendChild(left);
+      row.appendChild(right);
+      row.onclick = () => openDetails(entry);
+
+      container.appendChild(row);
+    });
+  }
+
+  function renderAll() {
+    renderPending();
+
+    renderRestrictedList({
+      listId: "approvedRestrictedList",
+      dateId: "approvedRestrictedDate",
+      idsFilterId: "approvedRestrictedIdsFilter",
+      status: "approved",
+      allowApprove: false,
+      allowDelete: true
+    });
+
+    renderRestrictedList({
+      listId: "rejectedRestrictedList",
+      dateId: "rejectedRestrictedDate",
+      idsFilterId: "rejectedRestrictedIdsFilter",
+      status: "disapproved",
+      allowApprove: true,
+      allowDelete: true
+    });
+
+    renderMonitoredList({
+      listId: "approvedMonitoredList",
+      dateId: "approvedMonitoredDate",
+      pharmId: "approvedMonitoredPharm",
+      status: "approved"
+    });
+
+    renderMonitoredList({
+      listId: "rejectedMonitoredList",
+      dateId: "rejectedMonitoredDate",
+      pharmId: "rejectedMonitoredPharm",
+      status: "disapproved"
+    });
+  }
+
+  // ==============================
+  // TAB SWITCHING
+  // ==============================
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+
+      const tab = btn.dataset.tab;
+      document.querySelectorAll(".section").forEach(sec => {
+        sec.classList.remove("active");
+      });
+      document.getElementById(tab).classList.add("active");
+    });
+  });
+
+  // ==============================
+  // FILTER CHANGE → RE-RENDER
+  // ==============================
+  [
+    "pendingIdsFilter",
+    "approvedRestrictedDate", "approvedRestrictedIdsFilter",
+    "rejectedRestrictedDate", "rejectedRestrictedIdsFilter",
+    "approvedMonitoredDate", "approvedMonitoredPharm",
+    "rejectedMonitoredDate", "rejectedMonitoredPharm"
+  ].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("change", renderAll);
+    el.addEventListener("input", renderAll);
+  });
+
+  // ==============================
+  // INIT
+  // ==============================
+  window.onload = loadData;
+</script>
+
+</body>
+</html>
