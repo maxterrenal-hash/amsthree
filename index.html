@@ -537,83 +537,85 @@ function openDetails(entry) {
   const d = entry.data;
   const box = document.getElementById("detailsBody");
 
-  // FIXED eGFR
-  const egfr = d.egfr || d.egfrtext || "";
+  // Normalized values (fix undefined)
+  const patientName = d.patientName || d.patientname || "—";
+  const age = d.age || "—";
+  const sex = d.sex || "—";
+  const hospitalNumber = d.hospitalNumber || d.hospitalnumber || "—";
+  const ward = d.ward || "—";
 
-  // FIXED SCr (same detection as pharmacy)
+  const weight = d.weightKg || d.weightkg || d.weight || "—";
+  const height = d.heightCm || d.heightcm || d.height || "—";
+
+  const diagnosis = d.diagnosis || "—";
+  const indication = d.indication || "—";
+  const basis = d.basisforindication || d.basisForIndication || "—";
+
+  const resident = d.residentName || d.residentname || "—";
+  const serviceResident = d.serviceResidentName || d.serviceresidentname || "—";
+  const idsSpecialist = d.idSpecialist || d.infectiousdiseasespecialist || "—";
+
   const scr =
     d["scrmg/dl"] ||
     d.scrmgdl ||
     d.scrMgDl ||
-    d.scrmgDl ||
-    d["scr (mg/dl)"] ||
-    d["scr (mg/dL)"] ||
     d.scr ||
-    "";
+    "—";
 
-  // FIXED date field (IDS uses reqDate)
-  const reqDate = d.reqDate || "—";
+  const egfr =
+    d.egfr ||
+    d.egfrtext ||
+    d.eGFR ||
+    d.egfrText ||
+    "—";
+
+  const reqDate = d.reqDate || d.date || d.reqdate || "—";
+
+  const drug = d.antimicrobial || "—";
+  const dose = d.dose || "—";
+  const freq = d.frequency || "—";
+  const duration = d.duration || "—";
+
+  const status = d.status || "—";
 
   let html = `
     <p><strong>Date:</strong> ${reqDate}</p>
     <hr>
 
-    <p><strong>Name:</strong> ${d.patientName || d.patientname || ""}</p>
-    <p><strong>Age/Sex:</strong> ${d.age} y, ${d.sex}</p>
-    <p><strong>Hospital #:</strong> ${d.hospitalNumber || d.hospitalnumber || ""}</p>
-    <p><strong>Ward:</strong> ${d.ward}</p>
-    <p><strong>Weight:</strong> ${d.weightkg} kg</p>
-    <p><strong>Height:</strong> ${d.heightcm} cm</p>
+    <p><strong>Name:</strong> ${patientName}</p>
+    <p><strong>Age/Sex:</strong> ${age} y, ${sex}</p>
+    <p><strong>Hospital #:</strong> ${hospitalNumber}</p>
+    <p><strong>Ward:</strong> ${ward}</p>
+    <p><strong>Weight:</strong> ${weight} kg</p>
+    <p><strong>Height:</strong> ${height} cm</p>
     <hr>
 
-    ${scr ? `<p><strong>Serum Creatinine:</strong> ${scr}</p>` : ""}
-    ${egfr ? `<p><strong>eGFR:</strong> ${egfr}</p>` : ""}
+    <p><strong>Serum Creatinine:</strong> ${scr}</p>
+    <p><strong>eGFR:</strong> ${egfr}</p>
     <hr>
 
-    <p><strong>Drug:</strong> ${d.antimicrobial}</p>
-    <p><strong>Dose:</strong> ${d.dose}</p>
-    <p><strong>Frequency:</strong> ${d.frequency}</p>
-    <p><strong>Duration:</strong> ${d.duration}</p>
+    <p><strong>Drug:</strong> ${drug}</p>
+    <p><strong>Dose:</strong> ${dose}</p>
+    <p><strong>Frequency:</strong> ${freq}</p>
+    <p><strong>Duration:</strong> ${duration}</p>
     <hr>
 
-    <p><strong>Diagnosis:</strong> ${d.diagnosis}</p>
-    <p><strong>Indication:</strong> ${d.indication}</p>
-    <p><strong>Basis for Indication:</strong> ${d.basisforindication || ""}</p>
+    <p><strong>Diagnosis:</strong> ${diagnosis}</p>
+    <p><strong>Indication:</strong> ${indication}</p>
+    <p><strong>Basis for Indication:</strong> ${basis}</p>
     <hr>
 
-    <p><strong>Resident:</strong> ${d.residentname}</p>
-    <p><strong>Service Resident:</strong> ${d.serviceresidentname}</p>
-    <p><strong>IDS Specialist:</strong> ${d.infectiousdiseasespecialist}</p>
-    <p><strong>Status:</strong> ${d.status}</p>
+    <p><strong>Resident:</strong> ${resident}</p>
+    <p><strong>Service Resident:</strong> ${serviceResident}</p>
+    <p><strong>IDS Specialist:</strong> ${idsSpecialist}</p>
+    <p><strong>Status:</strong> ${status}</p>
     <hr>
   `;
-
-  // MONOGRAPH
-  if (window.ADULT_MONOGRAPHS || window.PEDIATRIC_MONOGRAPHS) {
-    const drugName = (d.antimicrobial || "").trim();
-    const normalized = drugName.replace(/\bIV\b/gi, "").trim();
-
-    let mono =
-      (d.mode === "pediatric" ? PEDIATRIC_MONOGRAPHS?.[normalized] : null) ||
-      ADULT_MONOGRAPHS?.[normalized];
-
-    if (mono) {
-      html += `
-        <h4>Monograph</h4>
-        ${mono.spectrum ? `<p><strong>Spectrum:</strong> ${mono.spectrum}</p>` : ""}
-        ${mono.dosing ? `<p><strong>Dosing:</strong> ${mono.dosing}</p>` : ""}
-        ${mono.renal ? `<p><strong>Renal Adjustment:</strong> ${mono.renal}</p>` : ""}
-        ${mono.hepatic ? `<p><strong>Hepatic Adjustment:</strong> ${mono.hepatic}</p>` : ""}
-        ${mono.duration ? `<p><strong>Duration:</strong> ${mono.duration}</p>` : ""}
-        ${mono.monitoring ? `<p><strong>Monitoring:</strong> ${mono.monitoring}</p>` : ""}
-        <hr>
-      `;
-    }
-  }
 
   box.innerHTML = html;
   document.getElementById("detailsBackdrop").style.display = "flex";
 }
+
 
 
 
