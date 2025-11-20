@@ -843,26 +843,28 @@ function openDetails(entry) {
     });
   }
 
-function renderRestrictedList({ listId, fromId, toId, idsFilterId, status, allowApprove, allowDelete })
-    const container = document.getElementById(listId);
-    container.innerHTML = "";
+function renderRestrictedList({ listId, fromId, toId, idsFilterId, status, allowApprove, allowDelete }) {
+  const container = document.getElementById(listId);
+  container.innerHTML = "";
 
-    const date = document.getElementById(dateId).value;
-    const idsFilter = document.getElementById(idsFilterId).value;
+  const from = document.getElementById(fromId)?.value;
+  const to = document.getElementById(toId)?.value;
+  const idsFilter = document.getElementById(idsFilterId)?.value;
 
-    const filtered = ALL_DATA.filter(e => {
-      const d = e.data;
-      if (!d) return false;
-      if (d.drugType !== "Restricted") return false;
-      if (d.status !== status) return false;
-const from = document.getElementById(fromId)?.value;
-const to = document.getElementById(toId)?.value;
+  const filtered = ALL_DATA.filter(e => {
+    const d = e.data;
+    if (!d) return false;
+    if (d.drugType !== "Restricted") return false;
+    if (d.status !== status) return false;
 
-if (from && d.reqDate < from) return false;
-if (to && d.reqDate > to) return false;
-      if (idsFilter && d.idSpecialist !== idsFilter) return false;
-      return true;
-    });
+    if (from && d.reqDate < from) return false;
+    if (to && d.reqDate > to) return false;
+
+    if (idsFilter && d.idSpecialist !== idsFilter) return false;
+
+    return true;
+  });
+
 
     if (!filtered.length) {
       container.innerHTML = `<div class="list-item" style="cursor:default;"><div style="font-size:0.85rem; color:var(--text-muted);">No entries for this filter.</div></div>`;
@@ -955,29 +957,30 @@ if (to && d.reqDate > to) return false;
     });
   }
 
-function renderMonitoredList({ listId, fromId, toId, pharmId, status })
-    const container = document.getElementById(listId);
-    container.innerHTML = "";
+function renderMonitoredList({ listId, fromId, toId, pharmId, status }) {
+  const container = document.getElementById(listId);
+  container.innerHTML = "";
 
-    const date = document.getElementById(dateId).value;
-    const pharmFilter = document.getElementById(pharmId).value.trim().toLowerCase();
+  const from = document.getElementById(fromId)?.value;
+  const to = document.getElementById(toId)?.value;
+  const pharmFilter = document.getElementById(pharmId)?.value.trim().toLowerCase();
 
-    const filtered = ALL_DATA.filter(e => {
-      const d = e.data;
-      if (!d) return false;
-      if (d.drugType !== "Monitored") return false;
-      if (d.status !== status) return false;
-const from = document.getElementById(fromId)?.value;
-const to = document.getElementById(toId)?.value;
+  const filtered = ALL_DATA.filter(e => {
+    const d = e.data;
+    if (!d) return false;
+    if (d.drugType !== "Monitored") return false;
+    if (d.status !== status) return false;
 
-if (from && d.reqDate < from) return false;
-if (to && d.reqDate > to) return false;
+    if (from && d.reqDate < from) return false;
+    if (to && d.reqDate > to) return false;
 
-      const pharmName = (d.dispensedBy || "").toLowerCase();
-      if (pharmFilter && !pharmName.includes(pharmFilter)) return false;
+    if (pharmFilter) {
+      const pharmacist = (d.dispensedBy || "").toLowerCase();
+      if (!pharmacist.includes(pharmFilter)) return false;
+    }
 
-      return true;
-    });
+    return true;
+  });
 
     if (!filtered.length) {
       container.innerHTML = `<div class="list-item" style="cursor:default;"><div style="font-size:0.85rem; color:var(--text-muted);">No monitored entries for this filter.</div></div>`;
@@ -1020,42 +1023,46 @@ if (to && d.reqDate > to) return false;
     });
   }
 
-  function renderAll() {
-    renderPending();
+function renderAll() {
+  renderPending();
 
-renderRestrictedList({
-  listId: "approvedRestrictedList",
-  fromId: "approvedRestrictedFrom",
-  toId: "approvedRestrictedTo",
-  idsFilterId: "approvedRestrictedIdsFilter",
-  status: "approved",
-  allowApprove: false,
-  allowDelete: true
-});
+  renderRestrictedList({
+    listId: "approvedRestrictedList",
+    fromId: "approvedRestrictedFrom",
+    toId: "approvedRestrictedTo",
+    idsFilterId: "approvedRestrictedIdsFilter",
+    status: "approved",
+    allowApprove: false,
+    allowDelete: true
+  });
 
-    renderRestrictedList({
-      listId: "rejectedRestrictedList",
-      dateId: "rejectedRestrictedFrom",
-      idsFilterId: "rejectedRestrictedIdsFilter",
-      status: "disapproved",
-      allowApprove: true,
-      allowDelete: true
-    });
+  renderRestrictedList({
+    listId: "rejectedRestrictedList",
+    fromId: "rejectedRestrictedFrom",
+    toId: "rejectedRestrictedTo",
+    idsFilterId: "rejectedRestrictedIdsFilter",
+    status: "disapproved",
+    allowApprove: true,
+    allowDelete: true
+  });
 
-    renderMonitoredList({
-      listId: "approvedMonitoredList",
-      dateId: "approvedMonitoredFrom",
-      pharmId: "approvedMonitoredPharm",
-      status: "approved"
-    });
+  renderMonitoredList({
+    listId: "approvedMonitoredList",
+    fromId: "approvedMonitoredFrom",
+    toId: "approvedMonitoredTo",
+    pharmId: "approvedMonitoredPharm",
+    status: "approved"
+  });
 
-    renderMonitoredList({
-      listId: "rejectedMonitoredList",
-      dateId: "rejectedMonitoredFrom",
-      pharmId: "rejectedMonitoredPharm",
-      status: "disapproved"
-    });
-  }
+  renderMonitoredList({
+    listId: "rejectedMonitoredList",
+    fromId: "rejectedMonitoredFrom",
+    toId: "rejectedMonitoredTo",
+    pharmId: "rejectedMonitoredPharm",
+    status: "disapproved"
+  });
+}
+
 
   // ==============================
   // TAB SWITCHING
