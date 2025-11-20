@@ -520,19 +520,30 @@
     hideLoading();
   }
 
-  function setDefaultDates() {
-    const today = new Date().toISOString().split("T")[0];
-    const ids = [
-      "approvedRestrictedDate",
-      "rejectedRestrictedDate",
-      "approvedMonitoredDate",
-      "rejectedMonitoredDate"
-    ];
-    ids.forEach(id => {
-      const el = document.getElementById(id);
-      if (el && !el.value) el.value = today;
-    });
-  }
+function setDefaultDates() {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+
+  const firstOfMonth = `${yyyy}-${mm}-01`;
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+
+  const dateRanges = [
+    ["approvedRestrictedFrom", "approvedRestrictedTo"],
+    ["rejectedRestrictedFrom", "rejectedRestrictedTo"],
+    ["approvedMonitoredFrom", "approvedMonitoredTo"],
+    ["rejectedMonitoredFrom", "rejectedMonitoredTo"]
+  ];
+
+  dateRanges.forEach(([fromId, toId]) => {
+    const fromEl = document.getElementById(fromId);
+    const toEl = document.getElementById(toId);
+
+    if (fromEl && !fromEl.value) fromEl.value = firstOfMonth;
+    if (toEl && !toEl.value) toEl.value = todayStr;
+  });
+}
 
   // ==============================
   // MODALS – HELPERS
