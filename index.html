@@ -537,163 +537,10 @@ function openDetails(entry) {
   const d = entry.data;
   const box = document.getElementById("detailsBody");
 
-  // ======================
-  // MONOGRAPH INSERTION
-  // ======================
-  let monographHTML = "";
+  // FIXED eGFR
+  const egfr = d.egfr || d.egfrtext || "";
 
-  const drugName = (d.antimicrobial || "").trim();
-  const mode = (d.mode || "adult").toLowerCase();
-
-  const normalizedDrug = drugName.replace(/\bIV\b/gi, "").trim();
-
-  let monograph = null;
-
-  if (mode === "pediatric" && typeof PEDIATRIC_MONOGRAPHS !== "undefined") {
-    monograph = PEDIATRIC_MONOGRAPHS[normalizedDrug] || PEDIATRIC_MONOGRAPHS[drugName];
-  }
-  if (!monograph && typeof ADULT_MONOGRAPHS !== "undefined") {
-    monograph = ADULT_MONOGRAPHS[normalizedDrug] || ADULT_MONOGRAPHS[drugName];
-  }
-
-  // ===============================
-  // DOSE PARSER
-  // ===============================
-  let mgkgLow = null;
-  let mgkgHigh = null;
-  let fixedDoseLow = null;
-  let fixedDoseHigh = null;
-  let isWeightBased = false;
-
-  if (monograph?.dosing) {
-    const txt = monograph.dosing.toLowerCase();
-
-    const mgkgRange = txt.match(/(\d+(\.\d+)?)\s*[-–]\s*(\d+(\.\d+)?)\s*mg\/?kg/);
-    if (mgkgRange) {
-      mgkgLow = parseFloat(mgkgRange[1]);
-      mgkgHigh = parseFloat(mgkgRange[3]);
-      isWeightBased = true;
-    }
-
-    const mgkgSingle = txt.match(/(\d+(\.\d+)?)\s*mg\/?kg/);
-    if (!isWeightBased && mgkgSingle) {
-      mgkgLow = mgkgHigh = parseFloat(mgkgSingle[1]);
-      isWeightBased = true;
-    }
-
-    const fixedRange = txt.match(/(\d+(\.\d+)?)\s*[-–]\s*(\d+(\.\d+)?)(?:\s*g|\s*mg)(?!\/?kg)/);
-    if (!isWeightBased && fixedRange) {
-      const useG = txt.includes(" g");
-      fixedDoseLow = parseFloat(fixedRange[1]) * (useG ? 1000 : 1);
-      fixedDoseHigh = parseFloat(fixedRange[3]) * (useG ? 1000 : 1);
-    }
-
-    const fixedSingle = txt.match(/(\d+(\.\d+)?)(?:\s*g|\s*mg)(?!\/?kg)/);
-    if (!isWeightBased && fixedSingle) {
-      const useG = txt.includes(" g");
-      const dose = parseFloat(fixedSingle[1]) * (useG ? 1000 : 1);
-      fixedDoseLow = fixedDoseHigh = dose;
-    }
-  }
-
-  let computedLow = null;
-  let computedHigh = null;
-
-  if (isWeightBased && mgkgLow && mgkgHigh && d.weightkg) {
-    const wt = parseFloat(d.weightkg);
-    computedLow = mgkgLow * wt;
-    computedHigh = mgkgHigh * wt;
-  } 
-  else if (!isWeightBased && fixedDoseLow && fixedDoseHigh) {
-    computedLow = fixedDoseLow;
-    computedHigh = fixedDoseHigh;
-  }
-
-  // RENAL
-  let renalLow = computedLow;
-  let renalHigh = computedHigh;
-
-  let renalCategory = "";
-  let eGFR = parseFloat(d.egfrtext);
-
-  if (!isNaN(eGFR)) {
-    if (eGFR >= 60) renalCategory = "Normal Renal Function";
-    else if (eGFR >= 30) renalCategory = "Mild–Moderate Impairment (↓25%)";
-    else renalCategory = "Severe Impairment (↓50%)";
-
-    if (renalCategory.includes("Moderate")) {
-      renalLow *= 0.75;
-      renalHigh *= 0.75;
-    }
-    if (renalCategory.includes("Severe")) {
-      renalLow *= 0.50;
-      renalHigh *= 0.50;
-    }
-  }
-
-  // VALIDATION
-  let doseValidation = "";
-  let enteredDose = parseFloat(d.dose);
-
-  if (!isNaN(enteredDose) && computedLow && computedHigh) {
-    if (enteredDose < computedLow)
-      doseValidation = `<span class="dose-check-pill dc-warn">Lower than Suggested</span>`;
-    else if (enteredDose > computedHigh)
-      doseValidation = `<span class="dose-check-pill dc-bad">Higher than Suggested</span>`;
-    else
-      doseValidation = `<span class="dose-check-pill dc-ok">Within Suggested</span>`;
-  }
-
-  let doseCheckHTML = `
-  <div class="dose-check-box">
-    <h4>Dose Check</h4>
-    <div class="dose-check-row">
-      <div>Entered Dose:</div>
-      <strong>${d.dose || "—"}</strong>
-    </div>
-  `;
-
-  if (isWeightBased && mgkgLow && mgkgHigh && d.weightkg) {
-
-    doseCheckHTML += `
-      <div class="dose-check-row">
-        <div>Recommended Range (mg/kg):</div>
-        <strong>${mgkgLow}–${mgkgHigh} mg/kg</strong>
-      </div>
-
-      <div class="dose-check-row">
-        <div>Computed Dose Range (mg):</div>
-        <strong>${computedLow.toFixed(0)}–${computedHigh.toFixed(0)}</strong>
-      </div>
-
-      <div class="dose-check-row">
-        <div>Validation:</div>
-        ${doseValidation}
-      </div>
-    `;
-  }
-
-  if (!isWeightBased) {
-    const safeDose = monograph?.dosing || "—";
-    doseCheckHTML += `
-      <div class="dose-check-row">
-        <div>Recommended Dose:</div>
-        <strong>${safeDose}</strong>
-      </div>
-    `;
-  }
-
-  if (renalCategory) {
-    doseCheckHTML += `
-      <div class="dose-check-row">
-        <div>Renal Category:</div>
-        <strong>${renalCategory}</strong>
-      </div>
-    `;
-  }
-
-  doseCheckHTML += `</div>`;
-
+  // FIXED SCr (same detection as pharmacy)
   const scr =
     d["scrmg/dl"] ||
     d.scrmgdl ||
@@ -702,22 +549,25 @@ function openDetails(entry) {
     d["scr (mg/dl)"] ||
     d["scr (mg/dL)"] ||
     d.scr ||
-    null;
+    "";
+
+  // FIXED date field (IDS uses reqDate)
+  const reqDate = d.reqDate || "—";
 
   let html = `
-    <p><strong>Date:</strong> ${d.reqdate || d.date || "—"}</p>
+    <p><strong>Date:</strong> ${reqDate}</p>
     <hr>
 
-    <p><strong>Name:</strong> ${d.patientname}</p>
+    <p><strong>Name:</strong> ${d.patientName || d.patientname || ""}</p>
     <p><strong>Age/Sex:</strong> ${d.age} y, ${d.sex}</p>
-    <p><strong>Hospital #:</strong> ${d.hospitalnumber}</p>
+    <p><strong>Hospital #:</strong> ${d.hospitalNumber || d.hospitalnumber || ""}</p>
     <p><strong>Ward:</strong> ${d.ward}</p>
     <p><strong>Weight:</strong> ${d.weightkg} kg</p>
     <p><strong>Height:</strong> ${d.heightcm} cm</p>
     <hr>
 
-    ${scr !== null ? `<p><strong>Serum Creatinine:</strong> ${scr}</p>` : ""}
-    ${d.egfrtext ? `<p><strong>eGFR:</strong> ${d.egfrtext}</p>` : ""}
+    ${scr ? `<p><strong>Serum Creatinine:</strong> ${scr}</p>` : ""}
+    ${egfr ? `<p><strong>eGFR:</strong> ${egfr}</p>` : ""}
     <hr>
 
     <p><strong>Drug:</strong> ${d.antimicrobial}</p>
@@ -726,12 +576,9 @@ function openDetails(entry) {
     <p><strong>Duration:</strong> ${d.duration}</p>
     <hr>
 
-    ${doseCheckHTML}
-    <hr>
-
     <p><strong>Diagnosis:</strong> ${d.diagnosis}</p>
     <p><strong>Indication:</strong> ${d.indication}</p>
-    <p><strong>Basis for Indication:</strong> ${d.basisforindication}</p>
+    <p><strong>Basis for Indication:</strong> ${d.basisforindication || ""}</p>
     <hr>
 
     <p><strong>Resident:</strong> ${d.residentname}</p>
@@ -741,22 +588,33 @@ function openDetails(entry) {
     <hr>
   `;
 
-  if (monograph) {
-    html += `
-      <h4>Monograph</h4>
-      ${monograph.spectrum ? `<p><strong>Spectrum:</strong> ${monograph.spectrum}</p>` : ""}
-      ${monograph.dosing ? `<p><strong>Dosing:</strong> ${monograph.dosing}</p>` : ""}
-      ${monograph.renal ? `<p><strong>Renal Adjustment:</strong> ${monograph.renal}</p>` : ""}
-      ${monograph.hepatic ? `<p><strong>Hepatic Adjustment:</strong> ${monograph.hepatic}</p>` : ""}
-      ${monograph.duration ? `<p><strong>Duration:</strong> ${monograph.duration}</p>` : ""}
-      ${monograph.monitoring ? `<p><strong>Monitoring:</strong> ${monograph.monitoring}</p>` : ""}
-      <hr>
-    `;
+  // MONOGRAPH
+  if (window.ADULT_MONOGRAPHS || window.PEDIATRIC_MONOGRAPHS) {
+    const drugName = (d.antimicrobial || "").trim();
+    const normalized = drugName.replace(/\bIV\b/gi, "").trim();
+
+    let mono =
+      (d.mode === "pediatric" ? PEDIATRIC_MONOGRAPHS?.[normalized] : null) ||
+      ADULT_MONOGRAPHS?.[normalized];
+
+    if (mono) {
+      html += `
+        <h4>Monograph</h4>
+        ${mono.spectrum ? `<p><strong>Spectrum:</strong> ${mono.spectrum}</p>` : ""}
+        ${mono.dosing ? `<p><strong>Dosing:</strong> ${mono.dosing}</p>` : ""}
+        ${mono.renal ? `<p><strong>Renal Adjustment:</strong> ${mono.renal}</p>` : ""}
+        ${mono.hepatic ? `<p><strong>Hepatic Adjustment:</strong> ${mono.hepatic}</p>` : ""}
+        ${mono.duration ? `<p><strong>Duration:</strong> ${mono.duration}</p>` : ""}
+        ${mono.monitoring ? `<p><strong>Monitoring:</strong> ${mono.monitoring}</p>` : ""}
+        <hr>
+      `;
+    }
   }
 
   box.innerHTML = html;
   document.getElementById("detailsBackdrop").style.display = "flex";
 }
+
 
 
   function openPinModal(callback) {
