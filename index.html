@@ -361,9 +361,10 @@
 
   <!-- APPROVED RESTRICTED -->
   <section class="section" id="approvedRestricted">
-    <div class="filter-row">
-      <input type="date" id="approvedRestrictedDate">
-      <select id="approvedRestrictedIdsFilter">
+<div class="filter-row">
+  <input type="date" id="approvedRestrictedFrom">
+  <input type="date" id="approvedRestrictedTo">
+  <select id="approvedRestrictedIdsFilter">
         <option value="">All IDS</option>
         <option>Dr. Christopher John Tibayan</option>
         <option>Dr. Paulo Garcia</option>
@@ -376,8 +377,9 @@
 
   <!-- REJECTED RESTRICTED -->
   <section class="section" id="rejectedRestricted">
-    <div class="filter-row">
-      <input type="date" id="rejectedRestrictedDate">
+<div class="filter-row">
+  <input type="date" id="rejectedRestrictedFrom">
+  <input type="date" id="rejectedRestrictedTo">
       <select id="rejectedRestrictedIdsFilter">
         <option value="">All IDS</option>
         <option>Dr. Christopher John Tibayan</option>
@@ -392,7 +394,8 @@
   <!-- APPROVED MONITORED -->
   <section class="section" id="approvedMonitored">
     <div class="filter-row">
-      <input type="date" id="approvedMonitoredDate">
+<input type="date" id="approvedMonitoredFrom">
+<input type="date" id="approvedMonitoredTo">
       <input type="text" id="approvedMonitoredPharm" placeholder="Filter by Pharmacist">
     </div>
     <div class="list-container" id="approvedMonitoredList"></div>
@@ -401,7 +404,8 @@
   <!-- REJECTED MONITORED -->
   <section class="section" id="rejectedMonitored">
     <div class="filter-row">
-      <input type="date" id="rejectedMonitoredDate">
+<input type="date" id="rejectedMonitoredFrom">
+<input type="date" id="rejectedMonitoredTo">
       <input type="text" id="rejectedMonitoredPharm" placeholder="Filter by Pharmacist">
     </div>
     <div class="list-container" id="rejectedMonitoredList"></div>
@@ -839,7 +843,7 @@ function openDetails(entry) {
     });
   }
 
-  function renderRestrictedList({ listId, dateId, idsFilterId, status, allowApprove, allowDelete }) {
+function renderRestrictedList({ listId, fromId, toId, idsFilterId, status, allowApprove, allowDelete })
     const container = document.getElementById(listId);
     container.innerHTML = "";
 
@@ -851,7 +855,11 @@ function openDetails(entry) {
       if (!d) return false;
       if (d.drugType !== "Restricted") return false;
       if (d.status !== status) return false;
-      if (date && d.reqDate !== date) return false;
+const from = document.getElementById(fromId)?.value;
+const to = document.getElementById(toId)?.value;
+
+if (from && d.reqDate < from) return false;
+if (to && d.reqDate > to) return false;
       if (idsFilter && d.idSpecialist !== idsFilter) return false;
       return true;
     });
@@ -947,7 +955,7 @@ function openDetails(entry) {
     });
   }
 
-  function renderMonitoredList({ listId, dateId, pharmId, status }) {
+function renderMonitoredList({ listId, fromId, toId, pharmId, status })
     const container = document.getElementById(listId);
     container.innerHTML = "";
 
@@ -959,7 +967,11 @@ function openDetails(entry) {
       if (!d) return false;
       if (d.drugType !== "Monitored") return false;
       if (d.status !== status) return false;
-      if (date && d.reqDate !== date) return false;
+const from = document.getElementById(fromId)?.value;
+const to = document.getElementById(toId)?.value;
+
+if (from && d.reqDate < from) return false;
+if (to && d.reqDate > to) return false;
 
       const pharmName = (d.dispensedBy || "").toLowerCase();
       if (pharmFilter && !pharmName.includes(pharmFilter)) return false;
@@ -1011,18 +1023,19 @@ function openDetails(entry) {
   function renderAll() {
     renderPending();
 
-    renderRestrictedList({
-      listId: "approvedRestrictedList",
-      dateId: "approvedRestrictedDate",
-      idsFilterId: "approvedRestrictedIdsFilter",
-      status: "approved",
-      allowApprove: false,
-      allowDelete: true
-    });
+renderRestrictedList({
+  listId: "approvedRestrictedList",
+  fromId: "approvedRestrictedFrom",
+  toId: "approvedRestrictedTo",
+  idsFilterId: "approvedRestrictedIdsFilter",
+  status: "approved",
+  allowApprove: false,
+  allowDelete: true
+});
 
     renderRestrictedList({
       listId: "rejectedRestrictedList",
-      dateId: "rejectedRestrictedDate",
+      dateId: "rejectedRestrictedFrom",
       idsFilterId: "rejectedRestrictedIdsFilter",
       status: "disapproved",
       allowApprove: true,
@@ -1031,14 +1044,14 @@ function openDetails(entry) {
 
     renderMonitoredList({
       listId: "approvedMonitoredList",
-      dateId: "approvedMonitoredDate",
+      dateId: "approvedMonitoredFrom",
       pharmId: "approvedMonitoredPharm",
       status: "approved"
     });
 
     renderMonitoredList({
       listId: "rejectedMonitoredList",
-      dateId: "rejectedMonitoredDate",
+      dateId: "rejectedMonitoredFrom",
       pharmId: "rejectedMonitoredPharm",
       status: "disapproved"
     });
@@ -1064,12 +1077,15 @@ function openDetails(entry) {
   // FILTER CHANGE → RE-RENDER
   // ==============================
   [
-    "pendingIdsFilter",
-    "approvedRestrictedDate", "approvedRestrictedIdsFilter",
-    "rejectedRestrictedDate", "rejectedRestrictedIdsFilter",
-    "approvedMonitoredDate", "approvedMonitoredPharm",
-    "rejectedMonitoredDate", "rejectedMonitoredPharm"
-  ].forEach(id => {
+  "pendingIdsFilter",
+
+  "approvedRestrictedFrom", "approvedRestrictedTo", "approvedRestrictedIdsFilter",
+  "rejectedRestrictedFrom", "rejectedRestrictedTo", "rejectedRestrictedIdsFilter",
+
+  "approvedMonitoredFrom", "approvedMonitoredTo", "approvedMonitoredPharm",
+  "rejectedMonitoredFrom", "rejectedMonitoredTo", "rejectedMonitoredPharm"
+]
+.forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener("change", renderAll);
