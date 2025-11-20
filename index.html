@@ -304,6 +304,17 @@ const IDS_LIST = [
   "Dr. Pia Catrina Tolentino Torres"
 ];
 
+/* ==============================
+   IDS PINS (LOCAL PIN STORAGE)
+   ============================== */
+const IDS_PINS = {
+  "Dr. Christopher John Tibayan": "1987",
+  "Dr. Paulo Garcia": "1988",
+  "Dr. Jelly Ann Gozun-Recuenco": "1986",
+  "Dr. Michelle Carandang-Cuvin": "1978",
+  "Dr. Pia Catrina Tolentino Torres": "1979"
+};
+
 let ALL_DATA = [];
 let CURRENT_IDS = null;
 let pendingRejectFileId = null;
@@ -348,31 +359,21 @@ function renderPasskeyLogin() {
 /* ========================
    LOGIN SUBMIT
    ======================== */
-document.getElementById("loginSubmitBtn").onclick = async () => {
+document.getElementById("loginSubmitBtn").onclick = () => {
   const pin = document.getElementById("loginPinInput").value.trim();
   if (!pin) return alert("PIN required.");
 
-  try {
-    const res = await fetch(API, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "validateIdsLogin",
-        ids: CURRENT_IDS,
-        pin: pin
-      })
-    });
+  const expected = IDS_PINS[CURRENT_IDS];
 
-    const json = await res.json();
-    if (!json.ok) return alert("Invalid PIN.");
+  if (!expected) return alert("No PIN set for this IDS account.");
 
-    document.getElementById("loginOverlay").style.display = "none";
+  if (pin !== expected) return alert("Invalid PIN.");
 
-    loadData();
-
-  } catch (err) {
-    alert("Login error.");
-  }
+  // Success
+  document.getElementById("loginOverlay").style.display = "none";
+  loadData();
 };
+
 
 /* ========================
    LOADING OVERLAY
