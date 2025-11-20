@@ -811,24 +811,30 @@ function openDetails(entry) {
 
       const card = document.createElement("div");
       card.className = "card";
-      card.innerHTML = `
-        <div class="card-header">
-          <div class="card-title">${d.patientName || "Unnamed Patient"}</div>
-          <span class="pill pill-restricted">Restricted</span>
-        </div>
+card.innerHTML = `
+  <div class="card-header">
+    <div class="card-title">${d.patientName || "Unnamed Patient"}</div>
+    <span class="pill pill-restricted">Restricted</span>
+  </div>
 
-        <div class="card-body-line"><strong>Drug:</strong> ${d.antimicrobial || ""}</div>
-        <div class="card-body-line"><strong>Ward:</strong> ${d.ward || ""}</div>
+  <div class="card-body-line">
+    <strong>Drug:</strong> ${d.antimicrobial || ""}  
+    ${d.dose ? `(${d.dose}` : ""}${d.frequency ? ` × ${d.frequency})` : d.dose ? ")" : ""}
+  </div>
 
-        <div class="card-body-line">
-          <span class="pill pill-ids">${d.idSpecialist || "No IDS Assigned"}</span>
-        </div>
+  <div class="card-body-line"><strong>Service Resident:</strong> ${d.serviceResidentName || d.serviceresidentname || "—"}</div>
 
-        <div class="actions">
-          <button class="btn btn-approve btn-approve-ids">Approve</button>
-          <button class="btn btn-reject btn-reject-ids">Disapprove</button>
-        </div>
-      `;
+  <div class="card-body-line"><strong>Date:</strong> ${d.reqDate || "—"}</div>
+
+  <div class="card-body-line">
+    <span class="pill pill-ids">${d.idSpecialist || "No IDS Assigned"}</span>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-approve btn-approve-ids">Approve</button>
+    <button class="btn btn-reject btn-reject-ids">Disapprove</button>
+  </div>
+`;
 
       // Clicking the card opens full details
       card.onclick = (ev) => {
